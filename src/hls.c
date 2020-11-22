@@ -25,6 +25,10 @@
 #include "aes.h"
 #include "mpegts.h"
 
+static size_t priv_write(const uint8_t *data, size_t len, void *opaque) {
+    return fwrite(data, 1, len, opaque);
+}
+
 static uint64_t get_duration_ms(const char *ptr)
 {
     uint64_t v1 = 0;
@@ -1285,7 +1289,7 @@ static void *hls_playlist_update_thread(void *arg)
     return NULL;
 }
 
-int download_live_hls(write_ctx_t *out_ctx, hls_media_playlist_t *me)
+int download_live_hls(hls_media_playlist_t *me)
 {
     MSG_API("{\"d_t\":\"live\"}\n");
 
@@ -1422,7 +1426,18 @@ int download_live_hls(write_ctx_t *out_ctx, hls_media_playlist_t *me)
             } else if (me->encryption == true && me->encryptiontype == ENC_AES_SAMPLE) {
                 decrypt_sample_aes(ms, &seg);
             }
-            download_size += out_ctx->write(seg.data, seg.len, out_ctx->opaque);
+            // writes to file
+            char filename[MAX_FILENAME_LEN];
+            if (hls_args.filename) {
+                snprintf(filename, MAX_FILENAME_LEN, "%s/%d.ts", hls_args.filename, ms->sequence_number);
+            } else {
+                snprintf(filename, MAX_FILENAME_LEN, "%d.ts", ms->sequence_number);
+            }
+            
+            FILE *out_file = fopen(filename, "wb");
+            write_ctx_t out_ctx = {priv_write, out_file};
+            download_size += out_ctx.write(seg.data, seg.len, out_ctx.opaque);
+
             free(seg.data);
 
             set_fresh_connect_http_session(session, 0);

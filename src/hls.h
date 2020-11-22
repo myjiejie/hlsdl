@@ -93,7 +93,7 @@ typedef struct hls_playlist_updater_params {
 int get_playlist_type(char *source);
 int handle_hls_master_playlist(struct hls_master_playlist *ma);
 int handle_hls_media_playlist(hls_media_playlist_t *me);
-int download_live_hls(write_ctx_t *ctx, hls_media_playlist_t *me);
+int download_live_hls(hls_media_playlist_t *me);
 bool consecutive_sync_byte(uint8_t *buf, size_t len, uint8_t n);
 uint8_t * find_first_ts_packet(ByteBuffer_t *buf);
 int download_hls(write_ctx_t *ctx, hls_media_playlist_t *me, hls_media_playlist_t *me_audio);
